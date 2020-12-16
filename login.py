@@ -39,8 +39,30 @@ class LoginVerification:
             return f'Логин НЕ корректный. Время проверки {end-start}'
         return status
 
+    """2. Проверяем входную строку с помощью сравнивая с подготовленными выборками """
+    def check_with_prepared_sets(self, login):
+        status = self._check_length(login)
+        if status is True:
+            start = time.time()
+            first, middle, last = self._split_login(login)
+            set_for_first = set('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM')  # noqa
+            set_for_middle = set('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890.-')  # noqa
+            set_for_last = set('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890')  # noqa
+            if (
+                set(first).issubset(set_for_first)
+                and set(middle).issubset(set_for_middle)
+                and set(last).issubset(set_for_last)
+            ):
+                end = time.time()
+                return f'Логин корректный. Время проверки {end-start}'
+            end = time.time()
+            return f'Логин НЕ корректный. Время проверки {end-start}'
+        return status
+
+
 
 if __name__ == "__main__":
     login_from_user = input('Введите логин: ')
     login = LoginVerification()
     print(login.check_with_built_in(login_from_user))
+    print(login.check_with_prepared_sets(login_from_user))
