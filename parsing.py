@@ -27,7 +27,7 @@ def parsing_python_org_upcoming_events(html):
     events_list = upcoming_events_div.find_all('li')
     for event in events_list:
         event_date = dt.fromisoformat(event.time['datetime'])
-        current_month = dt.today().month
+        current_month = dt.now().month
         next_month = current_month + 1 if current_month != 12 else 1
         if event_date.month in (current_month, next_month):
             yield event_date.date(), event.a.string
