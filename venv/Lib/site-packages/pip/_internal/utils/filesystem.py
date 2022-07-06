@@ -40,17 +40,15 @@ def check_path_owner(path):
     previous = None
     while path != previous:
         if os.path.lexists(path):
-            # Check if path is writable by current user.
-            if os.geteuid() == 0:
-                # Special handling for root user in order to handle properly
-                # cases where users use sudo without -H flag.
-                try:
-                    path_uid = get_path_uid(path)
-                except OSError:
-                    return False
-                return path_uid == 0
-            else:
+            if os.geteuid() != 0:
                 return os.access(path, os.W_OK)
+            # Special handling for root user in order to handle properly
+            # cases where users use sudo without -H flag.
+            try:
+                path_uid = get_path_uid(path)
+            except OSError:
+                return False
+            return path_uid == 0
         else:
             previous, path = path, os.path.dirname(path)
     return False  # assume we don't own the path
@@ -160,13 +158,12 @@ def _test_writable_dir_win(path):
         file = os.path.join(path, name)
         try:
             fd = os.open(file, os.O_RDWR | os.O_CREAT | os.O_EXCL)
-        # Python 2 doesn't support FileExistsError and PermissionError.
         except OSError as e:
             # exception FileExistsError
             if e.errno == errno.EEXIST:
                 continue
             # exception PermissionError
-            if e.errno == errno.EPERM or e.errno == errno.EACCES:
+            if e.errno in [errno.EPERM, errno.EACCES]:
                 # This could be because there's a directory with the same name.
                 # But it's highly unlikely there's a directory called that,
                 # so we'll assume it's because the parent dir is not writable.
@@ -199,9 +196,7 @@ def find_files(path, pattern):
 def file_size(path):
     # type: (str) -> Union[int, float]
     # If it's a symlink, return 0.
-    if os.path.islink(path):
-        return 0
-    return os.path.getsize(path)
+    return 0 if os.path.islink(path) else os.path.getsize(path)
 
 
 def format_file_size(path):
